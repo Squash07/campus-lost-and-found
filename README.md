@@ -1,59 +1,153 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Campus Lost & Found — Web Programming ETS Project (EF234301)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> A centralized campus portal where students and staff report lost or found items, submit ownership claims with proof, and reconnect belongings with their rightful owners.
 
-## About Laravel
+[![Laravel 12](https://img.shields.io/badge/Laravel-12.x-red.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-777bb4.svg)](https://php.net)
+[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v3.x-38bdf8.svg)](https://tailwindcss.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📌 Project Overview
+* **Course:** Web Programming (EF234301) - Midterm Exam (ETS)
+* **Architecture:** MVC with Laravel 12 & Eloquent ORM
+* **Authentication:** Laravel Breeze (Blade Stack)
+* **Database Schema:** 4 Entities (`users`, `categories`, `items`, `claims`) with 4 Foreign Keys and strict ON DELETE rules (`RESTRICT` & `CASCADE`).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 👥 Demo Accounts
+You can log in directly using the seeded demo accounts:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+| Role | Email | Password | Privileges |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@lostfound.test` | `password` | Manage categories, moderate/delete any item |
+| **User 1** | `budi@lostfound.test` | `password` | Post items, claim found items, review claims, dashboard |
+| **User 2** | `siti@lostfound.test` | `password` | Post items, submit claims, review claims |
+| **User 3** | `andi@lostfound.test` | `password` | Post items, submit claims, review claims |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 🚀 Features (F1 – F11)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| # | Feature | CRUD | Description |
+| :-: | :--- | :--- | :--- |
+| **F1** | **Post Item** | Create | Post a lost or found item with title, category, description, campus location, date, and photo. |
+| **F2** | **Item Feed** | Read | Responsive card grid with status badges (`Open`, `Claimed`, `Returned`) and pagination. |
+| **F3** | **Item Detail** | Read | Complete details, high-res photo, reporter information, and contextual claim actions. |
+| **F4** | **Edit Item** | Update | Author-only editing with automatic photo replacement and policy protection. |
+| **F5** | **Delete Item** | Delete | Removes item, photo file, and cascades claims (Author or Admin). |
+| **F6** | **Search & Filter** | Read | Query filters by keyword (`q`), report type (`lost`/`found`), category, and status. |
+| **F7** | **Submit Claim** | Create | Non-owner users submit ownership proof (min. 20 chars) and WhatsApp/LINE contact. |
+| **F8** | **Review Claims** | Update | Poster approves or rejects claims. Approving auto-rejects other pending claims and reveals contact. |
+| **F9** | **Mark as Returned** | Update | Once claimed, the poster marks the item as returned, finalizing the lifecycle. |
+| **F10** | **Category Management** | CRUD | Admin-only dashboard to add, rename, and delete categories (delete blocked if items exist). |
+| **F11** | **User Dashboard** | Read | Real-time counts (total items, open, claimed, pending claims) and two management tables. |
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 🗄️ Database Design (Conceptual & Physical)
 
-## Contributing
+### Entity-Relationship Diagram (ERD)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```mermaid
+erDiagram
+    USERS ||--o{ ITEMS : posts
+    USERS ||--o{ CLAIMS : submits
+    CATEGORIES ||--o{ ITEMS : categorizes
+    ITEMS ||--o{ CLAIMS : receives
 
-## Code of Conduct
+    USERS {
+        bigint id PK
+        string name
+        string email UK
+        string password
+        enum role "user, admin"
+        timestamp created_at
+    }
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    CATEGORIES {
+        bigint id PK
+        string name UK
+        string slug UK
+        timestamp created_at
+    }
 
-## Security Vulnerabilities
+    ITEMS {
+        bigint id PK
+        bigint user_id FK "ON DELETE CASCADE"
+        bigint category_id FK "ON DELETE RESTRICT"
+        enum type "lost, found"
+        string title
+        text description
+        string location
+        date event_date
+        string photo_path
+        enum status "open, claimed, returned"
+        timestamp created_at
+    }
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    CLAIMS {
+        bigint id PK
+        bigint item_id FK "ON DELETE CASCADE"
+        bigint user_id FK "ON DELETE CASCADE"
+        text message
+        string contact
+        enum status "pending, approved, rejected"
+        timestamp created_at
+    }
+```
 
-## License
+### Foreign Keys & Constraints
+1. `items.user_id` $\rightarrow$ `users.id` (`ON DELETE CASCADE`): Deleting a user removes their posted items.
+2. `items.category_id` $\rightarrow$ `categories.id` (`ON DELETE RESTRICT`): Categories with active items cannot be deleted, preserving relational integrity.
+3. `claims.item_id` $\rightarrow$ `items.id` (`ON DELETE CASCADE`): Deleting an item removes all associated claims.
+4. `claims.user_id` $\rightarrow$ `users.id` (`ON DELETE CASCADE`): Deleting a user removes their claims.
+5. Unique constraint on `claims(item_id, user_id)`: Prevents duplicate claims by the same user on a single item.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## ⚙️ Local Setup Instructions
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/Squash07/campus-lost-and-found.git
+cd campus-lost-and-found
+```
+
+### 2. Environment Configuration
+```bash
+cp .env.example .env
+```
+
+### 3. Install Dependencies
+```bash
+php composer.phar install
+# or: composer install
+```
+
+### 4. Generate Application Key
+```bash
+php artisan key:generate
+```
+
+### 5. Run Migrations & Seeders
+```bash
+touch database/database.sqlite
+php artisan migrate --seed
+```
+
+### 6. Start Local Development Server
+```bash
+php artisan serve
+```
+Open **[http://localhost:8000](http://localhost:8000)** in your browser.
+
+---
+
+## 🔒 Security & Policies
+* **Authorization:** Implemented via `ItemPolicy` and `ClaimPolicy` to block unauthorized URL manipulation with HTTP 403.
+* **Middleware:** `EnsureUserIsAdmin` protects `/admin/*` routes.
+* **Uploads:** Validated file types (`image/jpeg`, `image/png`), maximum 2 MB, stored in `public/uploads` for seamless deployment across standard shared hosting environments.
+* **Database Transactions:** Approving a claim executes atomically within a `DB::transaction` block.
