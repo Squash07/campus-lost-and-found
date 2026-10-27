@@ -13,7 +13,10 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Campus Lost & Found'),
+
+    // Show the one-click demo accounts box on the login page outside local env
+    'show_demo_accounts' => (bool) env('SHOW_DEMO_ACCOUNTS', false),
 
     /*
     |--------------------------------------------------------------------------

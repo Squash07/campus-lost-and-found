@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 // Public Feed & Item Detail
 Route::get('/', [ItemController::class, 'index'])->name('items.index');
-Route::get('/items/{item}', [ItemController::class, 'show'])->name('items.show');
+// whereNumber keeps "/items/create" from being captured as an item id
+Route::get('/items/{item}', [ItemController::class, 'show'])->whereNumber('item')->name('items.show');
 
 // Authenticated Item & Claim actions
 Route::middleware('auth')->group(function () {

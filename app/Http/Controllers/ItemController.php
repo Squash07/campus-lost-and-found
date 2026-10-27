@@ -17,7 +17,17 @@ class ItemController extends Controller
     {
         $categories = Category::orderBy('name')->get();
 
-        $filters = $request->only(['q', 'type', 'category', 'status']);
+        // Validate the query string so odd input (e.g. ?q[]=x) can't crash the page.
+        $validator = validator($request->only(['q', 'type', 'category', 'status']), [
+            'q' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'in:lost,found'],
+            'category' => ['nullable', 'integer'],
+            'status' => ['nullable', 'in:open,claimed,returned'],
+        ]);
+        if ($validator->fails()) {
+            return redirect()->route('items.index');
+        }
+        $filters = $validator->validated();
 
         $items = Item::with(['user', 'category'])
             ->filter($filters)
@@ -42,15 +52,7 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'type' => ['required', 'in:lost,found'],
-            'title' => ['required', 'string', 'max:100'],
-            'category_id' => ['required', 'exists:categories,id'],
-            'description' => ['required', 'string'],
-            'location' => ['required', 'string', 'max:150'],
-            'event_date' => ['required', 'date', 'before_or_equal:today'],
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-        ]);
+        $validated = $this->validateItem($request);
 
         $photoPath = null;
         if ($request->hasFile('photo')) {
@@ -69,7 +71,7 @@ class ItemController extends Controller
         ]);
 
         return redirect()->route('items.show', $item)
-            ->with('success', 'Item posted successfully!');
+            ->with('success', 'Item posted. You can follow responses from your dashboard.');
     }
 
     /**
@@ -78,6 +80,9 @@ class ItemController extends Controller
     public function show(Item $item)
     {
         $item->load(['user', 'category']);
+
+        // Used by the Posted → Claimed → Returned timeline
+        $approvedClaim = $item->claims()->where('status', 'approved')->first();
 
         $isOwner = Auth::check() && Auth::id() === $item->user_id;
 
@@ -89,7 +94,7 @@ class ItemController extends Controller
             ? $item->claims()->where('user_id', Auth::id())->first()
             : null;
 
-        return view('items.show', compact('item', 'isOwner', 'claims', 'userClaim'));
+        return view('items.show', compact('item', 'isOwner', 'claims', 'userClaim', 'approvedClaim'));
     }
 
     /**
@@ -110,15 +115,7 @@ class ItemController extends Controller
     {
         $this->authorize('update', $item);
 
-        $validated = $request->validate([
-            'type' => ['required', 'in:lost,found'],
-            'title' => ['required', 'string', 'max:100'],
-            'category_id' => ['required', 'exists:categories,id'],
-            'description' => ['required', 'string'],
-            'location' => ['required', 'string', 'max:150'],
-            'event_date' => ['required', 'date', 'before_or_equal:today'],
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-        ]);
+        $validated = $this->validateItem($request);
 
         if ($request->hasFile('photo')) {
             if ($item->photo_path && Storage::disk('uploads')->exists($item->photo_path)) {
@@ -138,7 +135,7 @@ class ItemController extends Controller
         ]);
 
         return redirect()->route('items.show', $item)
-            ->with('success', 'Item updated successfully!');
+            ->with('success', 'Changes saved.');
     }
 
     /**
@@ -155,7 +152,7 @@ class ItemController extends Controller
         $item->delete();
 
         return redirect()->route('items.index')
-            ->with('success', 'Item deleted successfully.');
+            ->with('success', 'Post deleted.');
     }
 
     /**
@@ -163,11 +160,39 @@ class ItemController extends Controller
      */
     public function markReturned(Item $item)
     {
-        abort_unless(Auth::id() === $item->user_id, 403, 'Unauthorized action.');
-        abort_unless($item->status === 'claimed', 422, 'Only claimed items can be marked as returned.');
+        $this->authorize('update', $item);
+
+        if ($item->status !== 'claimed') {
+            return back()->with('error', 'Approve a claim first. Only claimed items can be marked as returned.');
+        }
 
         $item->update(['status' => 'returned']);
 
-        return back()->with('success', 'Item has been marked as returned!');
+        return back()->with('success', 'Marked as returned. Thanks for helping it get home.');
+    }
+
+    /**
+     * Validation shared by store and update (F1, F4), with readable field
+     * names so errors say "The category field is required." and not "category id".
+     */
+    private function validateItem(Request $request): array
+    {
+        return $request->validate([
+            'type' => ['required', 'in:lost,found'],
+            'title' => ['required', 'string', 'max:100'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'description' => ['required', 'string', 'max:2000'],
+            'location' => ['required', 'string', 'max:150'],
+            'event_date' => ['required', 'date', 'before_or_equal:today'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+        ], [
+            'type.required' => 'Choose whether you lost or found this item.',
+            'event_date.before_or_equal' => 'The date can\'t be in the future.',
+            'photo.max' => 'The photo must be 2 MB or smaller.',
+        ], [
+            'title' => 'item name',
+            'category_id' => 'category',
+            'event_date' => 'date',
+        ]);
     }
 }

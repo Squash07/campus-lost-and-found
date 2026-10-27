@@ -5,48 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Campus Lost & Found') }}</title>
+    {{-- $title is a slot, already escaped where it was written --}}
+    <title>@isset($title){!! $title !!} | @endisset{{ "Campus Lost & Found" }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    @include('layouts.partials.head')
 </head>
-<body class="font-sans text-slate-800 antialiased bg-gradient-to-br from-slate-100 via-sky-50 to-slate-100 min-h-screen flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
-        <a href="{{ route('items.index') }}" class="inline-flex items-center space-x-3 group">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-200 group-hover:scale-105 transition-transform duration-200">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                </svg>
-            </div>
-            <div class="text-left">
-                <h1 class="text-xl font-extrabold tracking-tight text-slate-900 leading-tight">Campus</h1>
-                <p class="text-xs font-semibold text-sky-600 tracking-wider uppercase">Lost & Found Portal</p>
-            </div>
+<body class="font-sans text-slate-800 antialiased min-h-screen grid lg:grid-cols-2">
+    <!-- Brand panel (large screens) -->
+    <aside class="hidden lg:flex flex-col justify-between bg-sky-900 text-white p-12">
+        <a href="{{ route('items.index') }}" class="flex items-center gap-3">
+            <x-application-logo class="w-10 h-10" />
+            <span class="font-extrabold text-xl">Campus Lost &amp; Found</span>
         </a>
-    </div>
+        <div class="max-w-md">
+            <p class="text-3xl font-extrabold leading-tight">Every day, something gets left behind in a lecture hall.</p>
+            <p class="mt-4 text-sky-100">Post what you lost or found, check claims with a simple proof, and hand items back to their owners.</p>
+        </div>
+        <p class="text-sm text-sky-200">Web Programming (EF234301) midterm project</p>
+    </aside>
 
-    <div class="w-full sm:max-w-md bg-white py-8 px-6 shadow-xl shadow-slate-200/50 rounded-2xl border border-slate-100 sm:px-10">
-        {{ $slot }}
-    </div>
+    <main class="flex flex-col justify-center items-center px-4 py-12 sm:px-8">
+        <a href="{{ route('items.index') }}" class="lg:hidden flex items-center gap-2 mb-8">
+            <x-application-logo class="w-9 h-9" />
+            <span class="font-extrabold text-lg text-slate-900">Campus Lost &amp; Found</span>
+        </a>
 
-    <p class="mt-6 text-center text-xs text-slate-500">
-        &larr; <a href="{{ route('items.index') }}" class="font-semibold text-sky-600 hover:text-sky-500">Back to items feed</a>
-    </p>
+        <div class="w-full max-w-md">
+            {{ $slot }}
+        </div>
+
+        <a href="{{ route('items.index') }}" class="mt-8 text-sm font-semibold text-slate-500 hover:text-slate-900">Browse items without an account</a>
+    </main>
+
+    @include('layouts.partials.toasts')
 </body>
 </html>

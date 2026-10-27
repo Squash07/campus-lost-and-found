@@ -26,6 +26,9 @@ You can log in directly using the seeded demo accounts:
 | **User 1** | `budi@lostfound.test` | `password` | Post items, claim found items, review claims, dashboard |
 | **User 2** | `siti@lostfound.test` | `password` | Post items, submit claims, review claims |
 | **User 3** | `andi@lostfound.test` | `password` | Post items, submit claims, review claims |
+| **User 4** | `dewi@lostfound.test` | `password` | Has claims in every state (pending, approved, rejected) |
+
+See **[TESTING.md](TESTING.md)** for a click-through checklist of every feature using this demo data.
 
 ---
 
@@ -43,7 +46,7 @@ You can log in directly using the seeded demo accounts:
 | **F8** | **Review Claims** | Update | Poster approves or rejects claims. Approving auto-rejects other pending claims and reveals contact. |
 | **F9** | **Mark as Returned** | Update | Once claimed, the poster marks the item as returned, finalizing the lifecycle. |
 | **F10** | **Category Management** | CRUD | Admin-only dashboard to add, rename, and delete categories (delete blocked if items exist). |
-| **F11** | **User Dashboard** | Read | Real-time counts (total items, open, claimed, pending claims) and two management tables. |
+| **F11** | **User Dashboard** | Read | Counts, a "Needs your review" queue with approve/decline, and tabs for my posts and claims I sent. |
 
 ---
 
@@ -134,9 +137,9 @@ php artisan key:generate
 
 ### 5. Run Migrations & Seeders
 ```bash
-touch database/database.sqlite
-php artisan migrate --seed
+php artisan migrate:fresh --seed   # answer "yes" if asked to create the SQLite file
 ```
+The seeder also copies demo photos into `public/uploads/items`. Run the same command any time to reset the demo data.
 
 ### 6. Start Local Development Server
 ```bash
@@ -151,3 +154,9 @@ Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 * **Middleware:** `EnsureUserIsAdmin` protects `/admin/*` routes.
 * **Uploads:** Validated file types (`image/jpeg`, `image/png`), maximum 2 MB, stored in `public/uploads` for seamless deployment across standard shared hosting environments.
 * **Database Transactions:** Approving a claim executes atomically within a `DB::transaction` block.
+
+## 🧪 Tests
+```bash
+php artisan test
+```
+57 feature tests cover every feature, the business rules (no self-claims, one claim per user, only open items accept claims, only the poster reviews, protected categories) and that every page renders.

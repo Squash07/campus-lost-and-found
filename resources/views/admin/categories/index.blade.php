@@ -1,10 +1,11 @@
 <x-app-layout>
+    <x-slot name="title">Manage categories</x-slot>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
                 <div class="flex items-center space-x-2">
                     <span class="px-2 py-0.5 text-xs font-bold bg-indigo-100 text-indigo-700 rounded">Admin Panel</span>
-                    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Category Management (F10)</h1>
+                    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Categories</h1>
                 </div>
                 <p class="text-sm text-slate-500 mt-1">Manage campus item categories. Categories with existing items cannot be deleted.</p>
             </div>
@@ -18,7 +19,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <h2 class="text-base font-bold text-slate-800">All Categories ({{ $categories->total() }})</h2>
-                <span class="text-xs text-slate-400">Enforcing ON DELETE RESTRICT on categories</span>
+                <span class="text-xs text-slate-500">Categories that still have items can't be deleted</span>
             </div>
 
             <div class="overflow-x-auto">
@@ -51,7 +52,8 @@
                                     </a>
 
                                     @if($category->items_count === 0)
-                                        <form method="POST" action="{{ route('admin.categories.destroy', $category) }}" onsubmit="return confirm('Delete category {{ $category->name }}?');" class="inline">
+                                        <form method="POST" action="{{ route('admin.categories.destroy', $category) }}" class="inline"
+                                              data-confirm="Delete the {{ $category->name }} category?" data-confirm-action="Delete category">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-xs font-bold text-rose-600 hover:text-rose-800">
@@ -59,7 +61,7 @@
                                             </button>
                                         </form>
                                     @else
-                                        <span class="text-xs text-slate-300 cursor-not-allowed" title="Cannot delete category with linked items (restricted)">
+                                        <span class="text-xs text-slate-300 cursor-not-allowed" title="Move or delete its items first">
                                             Delete
                                         </span>
                                     @endif

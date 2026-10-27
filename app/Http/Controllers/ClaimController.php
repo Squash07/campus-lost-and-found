@@ -12,17 +12,26 @@ class ClaimController extends Controller
 {
     /**
      * Submit a claim on an item (F7).
+     *
+     * Business-rule violations redirect back with a friendly error message
+     * instead of a bare HTTP error page.
      */
     public function store(Request $request, Item $item)
     {
-        abort_if(Auth::id() === $item->user_id, 403, 'You cannot claim your own item.');
-        abort_if($item->status !== 'open', 422, 'This item is not open for claims.');
+        if (Auth::id() === $item->user_id) {
+            return back()->with('error', 'You cannot claim an item you posted yourself.');
+        }
 
-        $alreadyClaimed = $item->claims()->where('user_id', Auth::id())->exists();
-        abort_if($alreadyClaimed, 422, 'You have already submitted a claim on this item.');
+        if ($item->status !== 'open') {
+            return back()->with('error', 'This item is no longer accepting claims.');
+        }
+
+        if ($item->claims()->where('user_id', Auth::id())->exists()) {
+            return back()->with('error', 'You have already sent a claim for this item.');
+        }
 
         $validated = $request->validate([
-            'message' => ['required', 'string', 'min:20'],
+            'message' => ['required', 'string', 'min:20', 'max:1000'],
             'contact' => ['required', 'string', 'max:50'],
         ]);
 
@@ -33,29 +42,48 @@ class ClaimController extends Controller
             'status' => 'pending',
         ]);
 
-        return back()->with('success', 'Claim submitted successfully! The poster will review your proof.');
+        return back()->with('success', 'Claim sent. The poster will review it and you can track it on your dashboard.');
     }
 
     /**
-     * Approve a claim (F8).
+     * Approve a claim (F8). Runs in a transaction so the item status
+     * and the other claims never end up half-updated.
      */
     public function approve(Claim $claim)
     {
         $this->authorize('review', $claim);
-        abort_unless($claim->status === 'pending', 422, 'Only pending claims can be approved.');
 
-        DB::transaction(function () use ($claim) {
-            $claim->update(['status' => 'approved']);
-            $claim->item->update(['status' => 'claimed']);
+        if ($claim->status !== 'pending') {
+            return back()->with('error', 'Only pending claims can be approved.');
+        }
 
-            // Auto-reject other pending claims on this item
-            $claim->item->claims()
-                ->where('id', '!=', $claim->id)
+        // Lock the item row so two approvals sent at the same moment (e.g. from
+        // two browser tabs) can't both succeed.
+        $approved = DB::transaction(function () use ($claim) {
+            $item = Item::whereKey($claim->item_id)->lockForUpdate()->first();
+            $fresh = Claim::whereKey($claim->id)->lockForUpdate()->first();
+
+            if ($item->status !== 'open' || $fresh->status !== 'pending') {
+                return false;
+            }
+
+            $fresh->update(['status' => 'approved']);
+            $item->update(['status' => 'claimed']);
+
+            // Auto-reject the other pending claims on this item
+            $item->claims()
+                ->where('id', '!=', $fresh->id)
                 ->where('status', 'pending')
                 ->update(['status' => 'rejected']);
+
+            return true;
         });
 
-        return back()->with('success', 'Claim approved! Claimant contact info: ' . $claim->contact);
+        if (! $approved) {
+            return back()->with('error', 'This item already has an approved claim.');
+        }
+
+        return back()->with('success', 'Claim approved. Contact ' . $claim->user->name . ' at ' . $claim->contact . ' to arrange the handover.');
     }
 
     /**
@@ -64,10 +92,13 @@ class ClaimController extends Controller
     public function reject(Claim $claim)
     {
         $this->authorize('review', $claim);
-        abort_unless($claim->status === 'pending', 422, 'Only pending claims can be rejected.');
+
+        if ($claim->status !== 'pending') {
+            return back()->with('error', 'Only pending claims can be rejected.');
+        }
 
         $claim->update(['status' => 'rejected']);
 
-        return back()->with('success', 'Claim has been rejected.');
+        return back()->with('success', 'Claim rejected.');
     }
 }

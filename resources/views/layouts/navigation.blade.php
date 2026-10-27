@@ -1,147 +1,111 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+@php
+    $navLink = fn (bool $active) => 'px-3 py-2 rounded-lg text-sm font-semibold transition ' .
+        ($active ? 'text-sky-700 bg-sky-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100');
+@endphp
+
+<nav x-data="{ open: false }" class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-50" aria-label="Main">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
-            <!-- Brand & Navigation Links -->
-            <div class="flex items-center space-x-8">
-                <!-- Brand Logo -->
-                <a href="{{ route('items.index') }}" class="flex items-center space-x-3 group">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-200 group-hover:scale-105 transition-transform duration-200">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="font-extrabold text-lg tracking-tight text-slate-900 group-hover:text-sky-600 transition">Campus</span>
-                        <span class="font-bold text-lg text-sky-600">Lost&Found</span>
-                    </div>
+            <div class="flex items-center gap-8">
+                <a href="{{ route('items.index') }}" class="flex items-center gap-2.5">
+                    <x-application-logo class="w-9 h-9" />
+                    <span class="font-extrabold text-lg tracking-tight text-slate-900">Campus Lost&nbsp;&amp;&nbsp;Found</span>
                 </a>
 
-                <!-- Desktop Nav Links -->
-                <div class="hidden md:flex md:space-x-1 lg:space-x-2">
-                    <a href="{{ route('items.index') }}"
-                       class="px-3 py-2 rounded-lg text-sm font-semibold transition {{ request()->routeIs('items.index') ? 'text-sky-600 bg-sky-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
-                        Browse Feed
-                    </a>
-
+                <div class="hidden md:flex md:gap-1">
+                    <a href="{{ route('items.index') }}" class="{{ $navLink(request()->routeIs('items.index')) }}" @if(request()->routeIs('items.index')) aria-current="page" @endif>Browse</a>
                     @auth
-                        <a href="{{ route('items.create') }}"
-                           class="px-3 py-2 rounded-lg text-sm font-semibold transition {{ request()->routeIs('items.create') ? 'text-sky-600 bg-sky-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
-                            + Post Item
+                        <a href="{{ route('dashboard') }}" class="{{ $navLink(request()->routeIs('dashboard')) }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif>
+                            Dashboard
+                            @if($toReview > 0)
+                                <span class="ms-1 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-rose-600 text-white text-xs font-bold" title="{{ $toReview }} claim(s) waiting for your review">{{ $toReview }}</span>
+                            @endif
                         </a>
-
-                        <a href="{{ route('dashboard') }}"
-                           class="px-3 py-2 rounded-lg text-sm font-semibold transition {{ request()->routeIs('dashboard') ? 'text-sky-600 bg-sky-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
-                            My Dashboard
-                        </a>
-
                         @if(Auth::user()->isAdmin())
-                            <a href="{{ route('admin.categories.index') }}"
-                               class="px-3 py-2 rounded-lg text-sm font-semibold transition {{ request()->routeIs('admin.categories.*') ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
-                                <span class="inline-flex items-center">
-                                    Categories
-                                    <span class="ms-1.5 px-1.5 py-0.5 text-xs font-bold rounded bg-indigo-100 text-indigo-700">Admin</span>
-                                </span>
-                            </a>
+                            <a href="{{ route('admin.categories.index') }}" class="{{ $navLink(request()->routeIs('admin.categories.*')) }}">Categories</a>
                         @endif
                     @endauth
                 </div>
             </div>
 
-            <!-- Right: Auth Actions -->
-            <div class="hidden md:flex md:items-center md:space-x-3">
+            <div class="hidden md:flex md:items-center md:gap-2">
                 @auth
-                    <a href="{{ route('items.create') }}" class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow transition">
-                        <svg class="w-4 h-4 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Report Item
+                    <a href="{{ route('items.create') }}" class="inline-flex items-center px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                        <svg class="w-4 h-4 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                        Post an item
                     </a>
 
-                    <!-- User Dropdown Menu -->
-                    <div class="relative ms-2" x-data="{ userMenuOpen: false }">
-                        <button @click="userMenuOpen = !userMenuOpen"
-                                @click.away="userMenuOpen = false"
-                                class="flex items-center space-x-2 text-sm font-medium text-slate-700 hover:text-slate-900 px-3 py-2 rounded-lg hover:bg-slate-100 transition">
-                            <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                            </div>
-                            <span class="font-semibold">{{ Auth::user()->name }}</span>
+                    <div class="relative" x-data="{ userMenuOpen: false }" @keydown.escape="userMenuOpen = false">
+                        <button type="button" @click="userMenuOpen = !userMenuOpen" @click.outside="userMenuOpen = false"
+                                :aria-expanded="userMenuOpen.toString()" aria-haspopup="true"
+                                class="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition">
+                            <span class="w-8 h-8 rounded-full bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-xs" aria-hidden="true">
+                                {{ strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}
+                            </span>
+                            <span class="font-semibold max-w-32 truncate">{{ Auth::user()->name }}</span>
                             @if(Auth::user()->isAdmin())
                                 <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">Admin</span>
                             @endif
-                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                         </button>
 
-                        <div x-show="userMenuOpen"
-                             x-cloak
-                             class="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 py-1 z-50">
+                        <div x-show="userMenuOpen" x-cloak x-transition.origin.top.right
+                             class="absolute right-0 mt-2 w-56 rounded-xl bg-white shadow-lg ring-1 ring-slate-200 py-1 z-50">
                             <div class="px-4 py-2 border-b border-slate-100">
                                 <p class="text-xs text-slate-500">Signed in as</p>
-                                <p class="text-sm font-bold text-slate-900 truncate">{{ Auth::user()->email }}</p>
+                                <p class="text-sm font-semibold text-slate-900 truncate">{{ Auth::user()->email }}</p>
                             </div>
-
-                            <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium">Dashboard</a>
-                            <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 font-medium">Account Settings</a>
-
+                            <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Dashboard</a>
+                            <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Account settings</a>
                             @if(Auth::user()->isAdmin())
-                                <a href="{{ route('admin.categories.index') }}" class="block px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 font-medium">Manage Categories</a>
+                                <a href="{{ route('admin.categories.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Manage categories</a>
                             @endif
-
                             <div class="border-t border-slate-100 my-1"></div>
-
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 font-medium">
-                                    Log Out
-                                </button>
+                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50">Log out</button>
                             </form>
                         </div>
                     </div>
                 @else
-                    <a href="{{ route('login') }}" class="text-slate-600 hover:text-slate-900 px-4 py-2 text-sm font-semibold rounded-lg hover:bg-slate-100 transition">
-                        Log In
-                    </a>
-                    <a href="{{ route('register') }}" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-semibold rounded-lg shadow-sm hover:shadow transition">
-                        Register
-                    </a>
+                    <a href="{{ route('login') }}" class="text-slate-700 hover:text-slate-900 px-4 py-2 text-sm font-semibold rounded-lg hover:bg-slate-100 transition">Log in</a>
+                    <a href="{{ route('register') }}" class="bg-sky-700 hover:bg-sky-800 text-white px-4 py-2 text-sm font-semibold rounded-lg shadow-sm transition">Create account</a>
                 @endauth
             </div>
 
-            <!-- Mobile Hamburger Button -->
             <div class="flex items-center md:hidden">
-                <button @click="open = !open" class="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': !open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': !open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button type="button" @click="open = !open" :aria-expanded="open.toString()" aria-controls="mobile-menu"
+                        class="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    <span class="sr-only" x-text="open ? 'Close menu' : 'Open menu'">Open menu</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <path x-show="open" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Mobile menu -->
-    <div x-show="open" x-cloak class="md:hidden border-b border-slate-200 bg-white px-4 pt-2 pb-4 space-y-2">
-        <a href="{{ route('items.index') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">Browse Feed</a>
+    <div id="mobile-menu" x-show="open" x-cloak class="md:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1">
+        <a href="{{ route('items.index') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">Browse</a>
         @auth
-            <a href="{{ route('items.create') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">+ Post Item</a>
-            <a href="{{ route('dashboard') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">My Dashboard</a>
+            <a href="{{ route('items.create') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-sky-700 hover:bg-sky-50">Post an item</a>
+            <a href="{{ route('dashboard') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">Dashboard</a>
             @if(Auth::user()->isAdmin())
-                <a href="{{ route('admin.categories.index') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-indigo-700 hover:bg-indigo-50">Manage Categories</a>
+                <a href="{{ route('admin.categories.index') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">Manage categories</a>
             @endif
-            <div class="border-t border-slate-200 pt-2">
-                <div class="px-3 py-1 text-sm font-semibold text-slate-900">{{ Auth::user()->name }} ({{ Auth::user()->role }})</div>
-                <a href="{{ route('profile.edit') }}" class="block px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100">Settings</a>
-                <form method="POST" action="{{ route('logout') }}" class="mt-1">
+            <div class="border-t border-slate-200 pt-2 mt-2">
+                <p class="px-3 py-1 text-sm text-slate-500">Signed in as <span class="font-semibold text-slate-900">{{ Auth::user()->name }}</span></p>
+                <a href="{{ route('profile.edit') }}" class="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100">Account settings</a>
+                <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-rose-600 hover:bg-rose-50">Log Out</button>
+                    <button type="submit" class="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-rose-600 hover:bg-rose-50">Log out</button>
                 </form>
             </div>
         @else
-            <div class="border-t border-slate-200 pt-2 flex flex-col space-y-2">
-                <a href="{{ route('login') }}" class="text-center py-2 text-sm font-semibold text-slate-700 rounded-lg hover:bg-slate-100">Log In</a>
-                <a href="{{ route('register') }}" class="text-center py-2 text-sm font-semibold bg-sky-600 text-white rounded-lg shadow-sm">Register</a>
+            <div class="border-t border-slate-200 pt-3 mt-2 grid grid-cols-2 gap-2">
+                <a href="{{ route('login') }}" class="text-center py-2 text-sm font-semibold text-slate-700 rounded-lg border border-slate-200">Log in</a>
+                <a href="{{ route('register') }}" class="text-center py-2 text-sm font-semibold bg-sky-700 text-white rounded-lg">Create account</a>
             </div>
         @endauth
     </div>

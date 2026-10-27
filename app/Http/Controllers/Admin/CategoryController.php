@@ -41,11 +41,11 @@ class CategoryController extends Controller
 
         Category::create([
             'name' => $validated['name'],
-            'slug' => Str::slug($validated['name']),
+            'slug' => $this->uniqueSlug($validated['name']),
         ]);
 
         return redirect()->route('admin.categories.index')
-            ->with('success', 'Category created successfully!');
+            ->with('success', 'Category added.');
     }
 
     /**
@@ -72,11 +72,11 @@ class CategoryController extends Controller
 
         $category->update([
             'name' => $validated['name'],
-            'slug' => Str::slug($validated['name']),
+            'slug' => $this->uniqueSlug($validated['name'], $category->id),
         ]);
 
         return redirect()->route('admin.categories.index')
-            ->with('success', 'Category updated successfully!');
+            ->with('success', 'Category saved.');
     }
 
     /**
@@ -85,12 +85,29 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         if ($category->items()->exists()) {
-            return back()->with('error', 'Cannot delete category: items are currently assigned to this category.');
+            return back()->with('error', "This category still has items, so it can't be deleted. Move or delete those items first.");
         }
 
         $category->delete();
 
         return redirect()->route('admin.categories.index')
-            ->with('success', 'Category deleted successfully.');
+            ->with('success', 'Category deleted.');
+    }
+
+    /**
+     * Make a slug that is unique in the categories table
+     * (e.g. "C" and "C++" both slugify to "c").
+     */
+    private function uniqueSlug(string $name, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($name) ?: 'category';
+        $slug = $base;
+        $i = 2;
+
+        while (Category::where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists()) {
+            $slug = $base . '-' . $i++;
+        }
+
+        return $slug;
     }
 }
