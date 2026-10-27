@@ -1,0 +1,27 @@
+# Used only on hosts where the whole project sits in the web root (e.g. InfinityFree's htdocs).
+# It sends every request into public/, so app code, vendor/ and .env are never reachable.
+# Hosts whose document root already points at public/ ignore this file.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Never serve hidden files such as .env or .git (but allow .well-known for SSL checks)
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    # Drop trailing slashes here (Laravel's public/.htaccess would otherwise
+    # redirect "/dashboard/" to "/public/dashboard", which 404s)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.+)/$ /$1 [L,R=301]
+
+    # Everything else is handled by public/ (Laravel's own .htaccess and index.php)
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ /public/$1 [L]
+</IfModule>
+
+# Belt and braces in case mod_rewrite is ever off
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

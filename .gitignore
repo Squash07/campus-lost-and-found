@@ -24,3 +24,6 @@ Homestead.yaml
 Thumbs.db
 /public/uploads
 composer.phar
+
+# Built upload package for shared hosting (contains vendor/ and a real .env)
+/deploy

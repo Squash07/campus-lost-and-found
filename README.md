@@ -149,6 +149,9 @@ Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
 ---
 
+## 🌐 Deployment
+See **[DEPLOY.md](DEPLOY.md)** for step-by-step InfinityFree instructions. The MySQL schema and demo data are in `database/deploy/lostfound-mysql.sql`.
+
 ## 🔒 Security & Policies
 * **Authorization:** Implemented via `ItemPolicy` and `ClaimPolicy` to block unauthorized URL manipulation with HTTP 403.
 * **Middleware:** `EnsureUserIsAdmin` protects `/admin/*` routes.
